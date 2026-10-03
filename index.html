@@ -272,17 +272,17 @@ const SPACES_A={id:'a',name:'集郵冊',sub:'大家的郵票',mode:'album',cap:9
 const TO={g:'淑芬',o:'政國',p:'收信人'};
 SPACES.push(SPACES_A);SCENES.a='';
 const $=id=>document.getElementById(id);
-let resizing=false,finding=false,admin=false,db=null,uid='',cur=SPACES[0],pending=null,sel=null,unsubs=[],decos=[],frame='note';
+let resizing=false,finding=false,admin=false,db=null,uid=(()=>{let u='';try{u=localStorage.getItem('lt_uid')||''}catch(e){}if(!u){const m=document.cookie.match(/(?:^|; )lt_uid=([^;]+)/);if(m)u=m[1]}if(!/^u[a-z0-9]{10,24}$/.test(u))u='u'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>(b%36).toString(36)).join('');try{localStorage.setItem('lt_uid',u)}catch(e){}try{document.cookie='lt_uid='+u+';max-age=63072000;path=/;SameSite=Lax'}catch(e){}return u})(),cur=SPACES[0],pending=null,sel=null,unsubs=[],decos=[],frame='note';
 const toast=t=>{const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display='none',2200)};
 const store=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
 const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const BAD=['幹你','幹妳','幹您','幹他','操你','操妳','肏','靠北','靠杯','三小','白痴','白癡','智障','低能','腦殘','去死','死全家','廢物','賤人','婊子','機掰','雞掰','你媽','他媽','媽的','shit','fuck','bitch','asshole','nazi','kys'];
 const badTxt=t=>{const n=String(t||'').toLowerCase().replace(/[\s.\-_*·,，。！!?？~～、'"]/g,'');return BAD.some(w=>n.includes(w))};
 const chk=(...ts)=>{if(ts.some(badTxt)){toast('請使用友善的用詞，偏激字眼無法送出');return false}return true};
-const emsg=e=>!e?'未知錯誤':e.code==='permission-denied'?'沒有權限（這件作品不是用目前的身分建立的，或尚未通過身分驗證）':emsg(e);
+const emsg=e=>!e?'未知錯誤':e.code==='permission-denied'?'沒有權限（請確認 Firestore 規則已更新並發佈）':(e.code||e.message||'未知錯誤');
 const mineO=o=>!!uid&&o.uid===uid,canDel=o=>mineO(o)||admin;
 function refreshAll(){renderDecos();renderTools();renderMsgs(LM);if(cur.mode==='album')renderAlbum()}
-$('nick').value=store('lt_nick');
+$('nick').value=store('lt_nick');$('who').textContent='此裝置的身分 #'+uid.slice(1,7)+'（不需登入，可新增、編輯、刪除、移動自己的作品與留言）';
 const base=()=>'letters/'+cur.id;
 const rot=id=>{let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))%997;return(h%9)-4};
 const stampFill=(el,i)=>{if(i&&i.img){el.className=el.className.replace(/ ?ph/,'')+' ph';el.style.backgroundImage='url('+i.img+')';el.textContent='';const sp=document.createElement('span');sp.textContent=lab(i.date);sp.className=i.date==='mg'?'mg':'';const q=INF[i.date];if(q){sp.style.background=q[1];sp.style.color=q[2]}el.append(sp);return}el.className=el.className.replace(/ ?ph/,'');el.style.backgroundImage='';const s=STAMPS[i]||STAMPS[0];el.style.setProperty('--sc',s[2]);el.textContent='';el.append(s[0],document.createElement('br'),s[1])};
@@ -518,6 +518,7 @@ async function encT(text,code){const salt=crypto.getRandomValues(new Uint8Array(
 async function decT(x,code){const o=ub(x);return td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:o.slice(16,28)},await ckey(code,o.slice(0,16)),o.slice(28)))}
 function markOpen(id){if(OP.has(id))return;OP.add(id);put('lt_open',JSON.stringify([...OP].slice(-800)));renderWall()}
 const MB='letters/p/mails/';
+const CODES=()=>{try{return JSON.parse(store('lt_codes')||'{}')}catch(e){return{}}},saveCode=(id,c)=>{const o=CODES();o[id]=c;put('lt_codes',JSON.stringify(o))};
 function mbo(on){const bg=$('bg'),mb=bg&&bg.querySelector('.mb');if(!mb)return;let o=$('mbo');if(!o){o=mb.cloneNode(true);o.id='mbo';o.removeAttribute('class');mb.parentNode.insertBefore(o,mb)}o.style.display=on?'block':'none'}
 function renderWall(){const Wl=$('wall');Wl.innerHTML='';if(cur.id!=='p')return;const sc=$('scene'),SW=sc.offsetWidth,SH=sc.offsetHeight;
  Wl.append(mk('div','mbl','點郵筒寫信 ✉'));const hit=mk('div','mbh');hit.title='點我寫信';hit.onmouseenter=hit.onpointerdown=()=>mbo(true);hit.onmouseleave=()=>mbo(false);hit.onclick=ev=>{if(pending)return;ev.stopPropagation();openWriter()};Wl.append(hit);
@@ -557,7 +558,7 @@ function openWriter(ed){if(!db){toast('尚未連上資料庫');return}
    const ref=db.collection('letters/p/mails').doc(),d={to:toV,by:byV,uid,t:Date.now(),pp:paper,enc:false};let code=null;
    if(ecc.checked){let ch;for(let i=0;i<10;i++){const c=String(crypto.getRandomValues(new Uint32Array(1))[0]%100000).padStart(5,'0');ch=await sha(c);const q=await db.collection('letters/p/mails').where('ch','==',ch).limit(1).get();if(q.empty){code=c;break}}
     if(!code){toast('產生代碼失敗，請再試一次');send.disabled=false;return}
-    d.enc=true;d.ch=ch;d.ct=await encT(text,code);const bt=db.batch();bt.set(ref,d);bt.set(db.doc('secrets/'+ref.id),{uid,code});await bt.commit()}
+    d.enc=true;d.ch=ch;d.ct=await encT(text,code);const bt=db.batch();bt.set(ref,d);bt.set(db.doc('secrets/'+ref.id),{uid,code});await bt.commit();saveCode(ref.id,code)}
    else{d.text=text;await ref.set(d)}
    L.classList.remove('on');fx('p');setTimeout(()=>{const w=$('wrap');w.scrollTo({left:$('scene').offsetWidth*.62-w.clientWidth/2,behavior:'smooth'})},2400);
    if(code)setTimeout(()=>showCode(code),2700);else setTimeout(()=>toast('信已經放在來信牆上了'),2600)
@@ -567,7 +568,7 @@ function showCode(code){const B=$('smb');B.innerHTML='';B.append(mk('p','trh','�
  const bar=mk('div','bar'),cp=mk('button','','複製代碼'),ok=mk('button','pri','我記下了');cp.onclick=()=>{try{navigator.clipboard.writeText(code).then(()=>toast('已複製'))}catch(e){toast('請手動記下代碼')}};ok.onclick=closeS;bar.append(cp,ok);
  B.append(c,mk('p','','把這組代碼分享給想讓他讀信的人。牆上的「🔒 加密信封」輸入代碼後，就會顯示這封信。你本人隨時可以從「我寄出的信」直接打開，不需要代碼。'),bar);$('sm').classList.add('on')}
 async function openMail(m,codeIn){let text=m.text,code=codeIn;
- if(m.enc){if(!code&&(admin||mineO(m))){try{code=(await db.doc('secrets/'+m.id).get()).data().code}catch(e){toast('讀取代碼失敗：'+emsg(e));return}}
+ if(m.enc){if(!code&&(admin||mineO(m))){code=CODES()[m.id]||null;if(!code){try{code=(await db.doc('secrets/'+m.id).get()).data().code}catch(e){toast(admin?'讀取代碼失敗：'+emsg(e):'找不到這封信的代碼（可能是在別的裝置寄出的），請改用牆上的 🔒 信封輸入代碼');return}}}
   if(!code)return;try{text=await decT(m.ct,code)}catch(e){toast('代碼不正確');return}}
  const show=()=>showLetter(m,text,code);if(mineO(m)||admin)show();else tearScreen(show)}
 function tearScreen(cb){const B=$('smb');B.innerHTML='';B.append(mk('p','trh','請沿著虛線，由左向右撕開 ✂'));
@@ -618,13 +619,9 @@ renderTabs();enter(cur);
   firebase.initializeApp(firebaseConfig);
   for(const pm of ['LOCAL','SESSION','NONE']){try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence[pm]);break}catch(e){}}
   let initDone=false;
-  firebase.auth().onAuthStateChanged(u=>{if(!u){if(initDone)firebase.auth().signInAnonymously().catch(()=>{});return}uid=u.uid;admin=!u.isAnonymous;$('who').textContent='身分：'+(u.isAnonymous?'匿名 ':'管理員 ')+'#'+u.uid.slice(0,6)+'（已驗證，可編輯自己的作品）';$('adm').textContent=admin?'👑 管理員模式（點此登出）':'管理員登入';if(db)refreshAll()});
+  firebase.auth().onAuthStateChanged(u=>{admin=!!u&&!u.isAnonymous;$('adm').textContent=admin?'👑 管理員模式（點此登出）':'管理員登入';if(db)refreshAll()});
   $('adm').onclick=async()=>{if(admin){await firebase.auth().signOut();toast('已登出管理員');return}const em=prompt('管理員 Email');if(!em)return;const pw=prompt('密碼');if(!pw)return;try{await firebase.auth().signInWithEmailAndPassword(em.trim(),pw);toast('管理員登入成功')}catch(e){toast('登入失敗：'+emsg(e))}};
-  try{uid=(await firebase.auth().signInAnonymously()).user.uid}catch(e){console.warn(e);uid=store('lt_uid')||('g'+Math.random().toString(36).slice(2,12));put('lt_uid',uid);$('who').textContent='身分：未驗證（只能新增，無法編輯或刪除；請見上方提示）';toast('匿名登入失敗（'+(e.code||'')+'）：仍可留言，但無法按讚或編輯');warn('身分驗證失敗（'+emsg(e)+'）：目前無法編輯或刪除自己的作品與留言。請到 Firebase 主控台 → Authentication → 登入方式，確認「匿名」已啟用，並把網站網域加入「已授權網域」。')}
   initDone=true;db=firebase.firestore();try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
-  {const tmo=p=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j({code:'連線逾時，請檢查網路後再試'}),12000))]),_doc=db.doc.bind(db),_col=db.collection.bind(db);
-   db.doc=p=>{const r=_doc(p);['update','delete','set'].forEach(k=>{const f=r[k].bind(r);r[k]=(...a)=>tmo(f(...a))});return r};
-   db.collection=p=>{const c=_col(p),f=c.add.bind(c);c.add=(...a)=>tmo(f(...a));return c}}
   startStamps();enter(cur);
  }catch(e){console.error(e);warn('無法連上資料庫：'+(e.message||e))}
 })();
