@@ -201,7 +201,7 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:#e8a31766}
 <h2>致 親愛的使用者：</h2>
 <p>收信快樂。</p>
 <p>這裡是麥高芬劇團《收信快樂》的來信空間。我們想請你，替這場演出留下屬於你的一封信。</p>
-<p>▪ 在「淑芬的展覽」「政國的辦公室」「麥高芬郵政」，按下「寫一封信」，畫一個裝飾，可以選畫框（也可以不要）、調整大小、寫一句說明。寄出後，請點空間裡<b>亮起來的區域</b>，把信放上去。</p>
+<p>▪ 在「淑芬的展覽」「政國的辦公室」，按下「寫一封信」，畫一個裝飾，可以選畫框（也可以不要）、調整大小、寫一句說明。寄出後，請點空間裡<b>亮起來的區域</b>，把信放上去。</p>
 <p>▪ 點自己的信，可以拖曳移動、改大小或刪除；點別人的信，能放大看看作者想說的話。</p>
 <p>▪ 在「集郵冊」上傳演出照片，它會變成大家都能使用的郵票，也能按讚、留言。</p>
 <p>▪ 「淑芬的展覽」「政國的辦公室」旁有留言板；「麥高芬郵政」則請點左邊的郵筒，寫一封交換信件投進來信牆，可以署名、指定收信人，也能寄加密信件。請用友善的字句，偏激的字眼是寄不出去的。</p>
@@ -291,12 +291,12 @@ const stampFill=(el,i)=>{if(i&&i.img){el.className=el.className.replace(/ ?ph/,'
 function renderTabs(n){$('tabs').innerHTML='';SPACES.forEach(s=>{const b=document.createElement('button');b.className='tab'+(s.id===cur.id?' on':'');
  const t=document.createElement('b');t.textContent=s.name;const m=document.createElement('small');m.textContent=s.sub+(s.id===cur.id&&n!=null&&s.mode!=='album'?' · '+n+'/'+s.cap:'');b.append(t,m);b.onclick=()=>enter(s);$('tabs').append(b)})}
 function enter(s){
- cur=s;pending=null;sel=null;unsubs.forEach(u=>u());unsubs=[];setPlace(false);renderTabs();$('bg').innerHTML=SCENES[s.id];$('q').textContent=s.q;
- $('bname').textContent='· '+s.name;$('layer').innerHTML='';$('msgs').innerHTML='';decos=[];renderTools();const al=s.mode==='album';document.body.classList.toggle('album',al);document.body.classList.toggle('nopanel',al||s.id==='p');MAILS=[];renderWall();finding=false;resizing=false;$('wrap').style.display=al?'none':'';$('album').style.display=al?'block':'none';$('hint').style.display='none';replyTo=null;showR();if(al)renderAlbum();if(!db)return;
+ cur=s;pending=null;sel=null;unsubs.forEach(u=>u());unsubs=[];setPlace(false);renderTabs();('bg').innerHTML=SCENES[s.id];('q').textContent=s.q;
+ ('bname').textContent='·'+s.name;('layer').innerHTML='';('msgs').innerHTML='';decos=[];renderTools();constal=s.mode==='album';document.body.classList.toggle('album',al);document.body.classList.toggle('nopanel',al||s.id==='p');MAILS=[];renderWall();finding=false;resizing=false;('wrap').style.display=al?'none':'';('album').style.display=al?'block':'none';('hint').style.display='none';replyTo=null;showR();if(al)renderAlbum();if(!db)return;
  const L=(n,o,lim,cb)=>unsubs.push(db.collection(base()+'/'+n).orderBy('t',o).limit(lim).onSnapshot(q=>cb(q.docs.map(d=>Object.assign({id:d.id},d.data()))),()=>{}));
  L('decos','asc',400,l=>{decos=l;renderDecos();renderTools();renderTabs(cur.id==='p'?MAILS.length:l.length)});L('msgs','asc',300,renderMsgs);if(s.id==='p')L('mails','desc',500,l=>{MAILS=l;renderWall();renderTools();renderTabs(l.length)})}
 function renderTools(){
- const t=$('tools');t.innerHTML='';$('meter').textContent=cur.id==='p'?'來信 '+MAILS.length+' 封':'已有 '+decos.length+' / '+cur.cap+' 件';
+ const t=('tools');t.innerHTML='';('meter').textContent=cur.id==='p'?'來信 '+MAILS.length+' 封':'已有 '+decos.length+' / '+cur.cap+' 件';
  const own=decos.find(d=>d.id===sel&&mineO(d));
  if(own){const b=document.createElement('div');b.className='bar';b.append('這是你放的信：直接拖曳它就能移動　');
   const dref=()=>db.doc(base()+'/decos/'+own.id);
@@ -312,12 +312,12 @@ function renderTools(){
  const fb=document.createElement('button');fb.textContent='🔍 找我的信（'+mine.length+'）';fb.className=finding?'on':'';fb.onclick=()=>{finding=!finding;renderDecos();renderTools();if(finding&&mine[0])goTo(mine[0])};if(cur.id!=='p')row.append(fb);if(cur.id==='p')mailBtns(row);t.append(row);
  if(finding){const rs=document.createElement('div');rs.className='fres';if(!mine.length)rs.textContent='你在這個空間還沒有放過信喔。';
   mine.forEach(d=>{const b=document.createElement('button');b.className='fi';const e=mkDeco(d,true);e.style.setProperty('--r','0deg');const sp=document.createElement('span');sp.textContent=d.note||'（無說明）';b.append(e,sp);b.onclick=()=>goTo(d);rs.append(b)});t.append(rs)}}
-function goTo(d){const w=$('wrap'),sc=$('scene');sel=d.id;renderDecos();renderTools();w.scrollTo({left:(+d.x||0)*sc.offsetWidth-w.clientWidth/2,behavior:'smooth'});sc.scrollIntoView({block:'center',behavior:'smooth'})}
-function setPlace(on){$('scene').classList.toggle('place',on);const h=$('hint');h.style.display=on?'block':'none';h.className=on?'hint go':'hint';
+function goTo(d){const w=('wrap'),sc=('scene');sel=d.id;renderDecos();renderTools();w.scrollTo({left:(+d.x||0)*sc.offsetWidth-w.clientWidth/2,behavior:'smooth'});sc.scrollIntoView({block:'center',behavior:'smooth'})}
+function setPlace(on){('scene').classList.toggle('place',on);consth=('hint');h.style.display=on?'block':'none';h.className=on?'hint go':'hint';
  if(on){const z=cur.zone,zn=$('zone');zn.style.cssText='left:'+z[0]*100+'%;top:'+z[1]*100+'%;width:'+(z[2]-z[0])*100+'%;height:'+(z[3]-z[1])*100+'%';
   h.textContent='信寄到了！請在空間裡「亮起來」的黃色虛線區域點一下，把信放上去　';
   const c=document.createElement('button');c.textContent='取消';c.onclick=()=>{pending=null;setPlace(false)};h.append(c);
-  const w=$('wrap'),sc=$('scene');w.scrollTo({left:(z[0]+z[2])/2*sc.offsetWidth-w.clientWidth/2,behavior:'smooth'})}}
+  const w=('wrap'),sc=('scene');w.scrollTo({left:(z[0]+z[2])/2*sc.offsetWidth-w.clientWidth/2,behavior:'smooth'})}}
 $('scene').onclick=async e=>{if(!pending&&cur.id==='p'&&e.target.closest&&e.target.closest('.mb')){openWriter();return}
  if(!pending){if(sel){sel=null;renderDecos();renderTools()}return}
  const r=$('scene').getBoundingClientRect(),qx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height,z=cur.zone;
@@ -364,7 +364,7 @@ let LM=[];function renderMsgs(list){LM=list;const M=$('msgs'),keep=M.scrollTop,e
  const ids=new Set(list.map(m=>m.id)),kids={};list.forEach(m=>{if(m.re&&ids.has(m.re))(kids[m.re]=kids[m.re]||[]).push(m)});
  const item=(m,isR)=>{const e=document.createElement('div');e.className='m'+(isR?' r':'');const b=document.createElement('b');b.textContent=String(m.by||'匿名').slice(0,12)+' 敬上 · '+new Date(+m.t||0).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+(m.edited?'（已編輯）':'');
   e.append(b);const own=mineO(m);const acts=document.createElement('div');acts.className='acts';
-  const rp=document.createElement('button');rp.textContent='回覆';rp.onclick=()=>{replyTo={id:m.re&&ids.has(m.re)?m.re:m.id,by:String(m.by||'匿名').slice(0,12)};showR();$('panel').classList.add('open');$('txt').focus()};
+  const rp=document.createElement('button');rp.textContent='回覆';rp.onclick=()=>{replyTo={id:m.re&&ids.has(m.re)?m.re:m.id,by:String(m.by||'匿名').slice(0,12)};showR();('panel').classList.add('open');('txt').focus()};
   if(own&&editId===m.id){
    const ta=document.createElement('textarea');ta.value=editDraft||String(m.text||'');ta.maxLength=200;ta.rows=3;ta.style.cssText='width:100%;display:block;margin:6px 0;font:inherit;padding:6px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink);resize:vertical';
    ta.oninput=()=>{editDraft=ta.value};e.append(ta);
@@ -382,7 +382,7 @@ let LM=[];function renderMsgs(list){LM=list;const M=$('msgs'),keep=M.scrollTop,e
  list.filter(m=>!(m.re&&ids.has(m.re))).forEach(m=>item(m,false));
  if(end||list.length>lastN&&lastN===0)M.scrollTop=M.scrollHeight;else M.scrollTop=keep;lastN=list.length}
 // 手機：留言板側欄
-$('fab').onclick=()=>$('panel').classList.add('open');$('pclose').onclick=()=>$('panel').classList.remove('open');
+('fab').onclick=()=>('panel').classList.add('open');('pclose').onclick=()=>('panel').classList.remove('open');
 // 留言特效與音效
 let AC;const ac=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}};
 function tone(f,t0,d,type,v,f2){const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime+t0;o.type=type||'sine';o.frequency.setValueAtTime(f,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+d);
@@ -394,16 +394,16 @@ const SND={
  g(){[784,988,1319,1568,1976].forEach((f,i)=>{tone(f,i*.15,1,'sine',.12);tone(f*2,i*.15,.5,'triangle',.03)})},
  o(){for(let r=0;r<2;r++)for(let p=0;p<9;p++){tone(440,r*.8+p*.05,.04,'square',.05);tone(480,r*.8+p*.05,.04,'square',.05)}},
  p(){whoosh(0,.55,2200,300,.25);tone(150,.78,.3,'sine',.4,45);tone(1900,.8,.6,'triangle',.07);tone(2500,.81,.45,'triangle',.05)}};
-function fx(id){const a=ac(),bg=$('bg'),cls={g:'fg',o:'fo',p:'fp'}[id],w=$('wrap');
+function fx(id){const a=ac(),bg=('bg'),cls=g:'fg',o:'fo',p:'fp'[id],w=('wrap');
  w.scrollTo({left:{g:830,o:230,p:240}[id]/1600*$('scene').offsetWidth-w.clientWidth/2,behavior:'smooth'});
  bg.classList.remove(cls);void bg.getBoundingClientRect();bg.classList.add(cls);setTimeout(()=>bg.classList.remove(cls),2300);if(a)SND[id]()}
 $('send').onclick=async()=>{const text=$('txt').value.trim();if(!text||!db)return;const by=$('nick').value.trim().slice(0,12)||'匿名';put('lt_nick',by);if(!chk(text,by))return;
  const id=cur.id,re=replyTo?replyTo.id:null;if(!re){$('panel').classList.remove('open');0}
  try{await db.collection(base()+'/msgs').add(Object.assign({text:text.slice(0,200),by,uid,t:Date.now()},re?{re}:{}));$('txt').value='';replyTo=null;showR()}catch(e){toast('送出失敗：'+(e.code||e.message))}};
-$('nick').onchange=()=>put('lt_nick',$('nick').value.trim().slice(0,12));
+('nick').onchange=()=>put('ltnick',('nick').value.trim().slice(0,12));
 // 手繪板（寬 3:2）
 let strokes=[],color=COLORS[0],width=2,drawing=false;const cv=$('cv'),cx=cv.getContext('2d');
-COLORS.forEach((c,i)=>{const s=document.createElement('i');s.style.background=c;if(!i)s.className='on';s.onclick=()=>{color=c;$('cp').value=c;penRe();[...$('sw').children].forEach(x=>x.classList.remove('on'));s.classList.add('on')};$('sw').append(s)});
+COLORS.forEach((c,i)=>{const s=document.createElement('i');s.style.background=c;if(!i)s.className='on';s.onclick=()=>{color=c;('cp').value=c;penRe();[...('sw').children].forEach(x=>x.classList.remove('on'));s.classList.add('on')};$('sw').append(s)});
 FR.forEach(([k,n])=>{const b=document.createElement('button');b.textContent=n;if(k===frame)b.className='on';b.onclick=()=>{frame=k;[...$('chips').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');setPv();updatePvs()};$('chips').append(b)});
 function setPv(){const p=$('pv');p.className='pv f-'+frame;p.style.setProperty('--u',(p.clientWidth/16)+'px')}window.addEventListener('resize',setPv);
 let alpha=1;const WS=[1,2,3.5,5.5,8],PK=()=>($('cv').clientWidth||480)/240;
@@ -426,19 +426,19 @@ const pt=e=>{const r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.l
 cv.onpointerdown=e=>{drawing=true;cv.setPointerCapture(e.pointerId);strokes.push({c:color,w:width,a:alpha,p:pt(e)});redraw()};
 cv.onpointermove=e=>{if(!drawing)return;const st=strokes[strokes.length-1],[x,y]=pt(e),n=st.p.length;if(Math.abs(x-st.p[n-2])+Math.abs(y-st.p[n-1])<2||n>790)return;st.p.push(x,y);redraw()};
 cv.onpointerup=cv.onpointercancel=()=>drawing=false;
-$('undo').onclick=()=>{strokes.pop();redraw()};$('clr').onclick=()=>{strokes=[];redraw()};$('cancel').onclick=()=>$('modal').classList.remove('on');
+('undo').onclick=()=>strokes.pop();redraw();('clr').onclick=()=>{strokes=[];redraw()};('cancel').onclick=()=>('modal').classList.remove('on');
 let chosen=null;
 function renderPicker(){const b=$('stbar');b.innerHTML='郵票：';const r=document.createElement('button');r.textContent='🎲 隨機';r.className=chosen?'':'on';r.onclick=()=>{chosen=null;renderPicker()};b.append(r);
  stampList().forEach(p=>{const i=document.createElement('i');i.style.backgroundImage='url('+p.img+')';i.title=lab(p.date);i.className=chosen===p.id?'on':'';i.onclick=()=>{chosen=p.id;renderPicker()};b.append(i)});
  if(!stampList().length)b.append('（集郵冊還沒有照片郵票）');updatePvs()}
-function openPad(){chosen=null;renderPicker();strokes=[];redraw();$('note').value='';$('pen').classList.remove('open');$('modal').classList.add('on');setPv();dot()}
-$('done').onclick=()=>{if(!strokes.length){toast('先畫點什麼吧');return}const note=$('note').value.trim().slice(0,80);if(!chk(note,$('nick').value))return;$('modal').classList.remove('on');
+function openPad(){chosen=null;renderPicker();strokes=[];redraw();('note').value='';('pen').classList.remove('open');$('modal').classList.add('on');setPv();dot()}
+$('done').onclick=()=>{if(!strokes.length){toast('先畫點什麼吧');return}const note=$('note').value.trim().slice(0,80);if(!chk(note,('nick').value))return;('modal').classList.remove('on');
  const data=strokes.map(s=>({c:s.c,w:s.w,a:s.a,p:s.p})),st=Math.floor(Math.random()*STAMPS.length),fr=frame,ph=chosen&&PH[chosen]?chosen:null;
  sendAnim(data,ph?PH[ph]:st,()=>{pending=Object.assign({type:'draw',strokes:data,fr,st,sz:.8},note?{note}:{},ph?{ph}:{});setPlace(true);$('scene').scrollIntoView({block:'center'})})};
 // 寄信動畫：攤開 → 對折 → 再對折放進信封 → 封口 → 貼隨機郵票＋郵戳 → 寄出
 function sendAnim(data,si,done){const m=$('mail');document.querySelectorAll('#mail .sh').forEach(s=>{s.textContent='';s.append(strokeSvg(data))});
- stampFill($('stm'),si);$('to').textContent='TO：'+TO[cur.id];m.className='ov on';
- const caps=['把信紙攤開…','對折…','再折一次，放進信封','封好口','貼上郵票，蓋郵戳','寄出去了 ✉'];$('cap').textContent=caps[0];
+ stampFill(('stm'),si);('to').textContent='TO：'+TO[cur.id];m.className='ov on';
+ const caps=['把信紙攤開…','對折…','放進信封','封好口','貼上郵票，蓋郵戳','寄出去了 ✉'];$('cap').textContent=caps[0];
  [600,1800,3100,4000,5000].forEach((ms,i)=>setTimeout(()=>{m.classList.add('s'+(i+1));$('cap').textContent=caps[i+1]},ms));
  setTimeout(()=>{m.className='ov';done()},6400)}
 
@@ -520,8 +520,8 @@ async function encT(text,code){const salt=crypto.getRandomValues(new Uint8Array(
 async function decT(x,code){const o=ub(x);return td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:o.slice(16,28)},await ckey(code,o.slice(0,16)),o.slice(28)))}
 function markOpen(id){if(OP.has(id))return;OP.add(id);put('lt_open',JSON.stringify([...OP].slice(-800)));renderWall()}
 const MB='letters/p/mails/';
-function mbo(on){const bg=$('bg'),mb=bg&&bg.querySelector('.mb');if(!mb)return;let o=$('mbo');if(!o){o=mb.cloneNode(true);o.id='mbo';o.removeAttribute('class');mb.parentNode.insertBefore(o,mb)}o.style.display=on?'block':'none'}
-function renderWall(){const Wl=$('wall');Wl.innerHTML='';if(cur.id!=='p')return;const sc=$('scene'),SW=sc.offsetWidth,SH=sc.offsetHeight;
+function mbo(on){const bg=('bg'),mb=bg&&bg.querySelector('.mb');if(!mb)return;leto=('mbo');if(!o){o=mb.cloneNode(true);o.id='mbo';o.removeAttribute('class');mb.parentNode.insertBefore(o,mb)}o.style.display=on?'block':'none'}
+function renderWall(){const Wl=('wall');Wl.innerHTML='';if(cur.id!=='p')return;constsc=('scene'),SW=sc.offsetWidth,SH=sc.offsetHeight;
  Wl.append(mk('div','mbl','點郵筒寫信 ✉'));const hit=mk('div','mbh');hit.title='點我寫信';hit.onmouseenter=hit.onpointerdown=()=>mbo(true);hit.onmouseleave=()=>mbo(false);hit.onclick=ev=>{if(pending)return;ev.stopPropagation();openWriter()};Wl.append(hit);
  const encs=MAILS.filter(m=>m.enc),items=MAILS.filter(m=>!m.enc).map(m=>({m}));if(encs.length)items.unshift({sealed:1,n:encs.length});
  if(!SW)return;const n=items.length,z=[.31,.12,.968,.79],zx=z[0]*SW,zy=z[1]*SH,zw=(z[2]-z[0])*SW,zh=(z[3]-z[1])*SH;
@@ -541,7 +541,7 @@ function mailBtns(row){const w=mk('button','pri','✉️ 寫交換信件（也�
  const a=mk('button','','📮 全部來信（'+MAILS.filter(m=>!m.enc||admin).length+'）');a.onclick=()=>openList('all');
  const m=mk('button','','🧾 我寄出的信（'+MAILS.filter(mineO).length+'）');m.onclick=()=>openList('mine');row.append(w,a,m)}
 function openWriter(ed){if(!db){toast('尚未連上資料庫');return}
- const L=$('lmod'),B=$('lbx');B.innerHTML='';let paper=ed&&ed.m.pp?ed.m.pp:'cream';
+ const L=('lmod'),B=('lbx');B.innerHTML='';let paper=ed&&ed.m.pp?ed.m.pp:'cream';
  const chips=mk('div','bar chips'),pa=mk('div','paper p-'+paper);
  PAPERS.forEach(([k,nm])=>{const b=mk('button','',nm);b.type='button';b.className=k===paper?'on':'';b.onclick=()=>{paper=k;pa.className='paper p-'+k;[...chips.children].forEach(x=>x.classList.remove('on'));b.classList.add('on')};chips.append(b)});
  const to=mk('input');to.placeholder='寄給誰？（選填）';to.maxLength=12;to.value=ed?ed.m.to||'':'';const head=mk('div','pph');head.append('致 ',to,'：');
@@ -627,3 +627,4 @@ renderTabs();enter(cur);
  }catch(e){console.error(e);warn('無法連上資料庫：'+(e.message||e))}
 })();
 </script></body></html>
+
