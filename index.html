@@ -231,7 +231,7 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:#e8a31766}
 <div class="ov" id="mail"><div class="stage"><div class="en"><div class="bk"></div>
  <div class="pap"><div class="hf t"><div class="fc"><div class="sh"></div></div><div class="bc"></div></div><div class="hf b"><div class="fc"><div class="sh"></div></div></div></div>
  <div class="fl"></div><div class="fr"></div><div class="to" id="to"></div><div class="pm">收信<br>快樂</div><div class="stm" id="stm"></div></div><div id="cap"></div></div></div>
-<footer id="ft">麥高芬劇團 1151 冬季公演　<button id="adm">管理員登入</button></footer><div class="ov" id="lmod"><div id="lbx"></div></div><div id="toast"></div><div id="sm"><div class="bx" id="smb"></div></div><input type="file" id="pf" accept="image/*" style="display:none">
+<footer id="ft">麥高芬劇團 1151 冬季公演　<button id="adm">管理員登入</button><br><span id="who">身分：確認中…</span></footer><div class="ov" id="lmod"><div id="lbx"></div></div><div id="toast"></div><div id="sm"><div class="bx" id="smb"></div></div><input type="file" id="pf" accept="image/*" style="display:none">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -279,6 +279,7 @@ const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const BAD=['幹你','幹妳','幹您','幹他','操你','操妳','肏','靠北','靠杯','三小','白痴','白癡','智障','低能','腦殘','去死','死全家','廢物','賤人','婊子','機掰','雞掰','你媽','他媽','媽的','shit','fuck','bitch','asshole','nazi','kys'];
 const badTxt=t=>{const n=String(t||'').toLowerCase().replace(/[\s.\-_*·,，。！!?？~～、'"]/g,'');return BAD.some(w=>n.includes(w))};
 const chk=(...ts)=>{if(ts.some(badTxt)){toast('請使用友善的用詞，偏激字眼無法送出');return false}return true};
+const emsg=e=>!e?'未知錯誤':e.code==='permission-denied'?'沒有權限（這件作品不是用目前的身分建立的，或尚未通過身分驗證）':emsg(e);
 const mineO=o=>!!uid&&o.uid===uid,canDel=o=>mineO(o)||admin;
 function refreshAll(){renderDecos();renderTools();renderMsgs(LM);if(cur.mode==='album')renderAlbum()}
 $('nick').value=store('lt_nick');
@@ -299,7 +300,7 @@ function renderTools(){
   const dref=()=>db.doc(base()+'/decos/'+own.id);
   const rz=document.createElement('button');rz.textContent=resizing?'完成調整':'調整大小';rz.className=resizing?'on':'';rz.onclick=()=>{resizing=!resizing;renderDecos();renderTools();if(resizing)toast('拖曳裝飾四個角的圓點調整大小')};
   const vw=document.createElement('button');vw.textContent='放大看說明';vw.onclick=()=>openDeco(own);
-  const del=document.createElement('button');del.textContent='刪除';del.onclick=()=>{if(!del.dataset.s){del.dataset.s=1;del.textContent='確定刪除？';return}dref().delete().then(()=>{sel=null;renderTools();toast('已刪除')}).catch(er=>toast('刪除失敗：'+(er.code||er.message)))};
+  const del=document.createElement('button');del.textContent='刪除';del.onclick=()=>{if(!del.dataset.s){del.dataset.s=1;del.textContent='確定刪除？';return}dref().delete().then(()=>{sel=null;renderTools();toast('已刪除')}).catch(er=>toast('刪除失敗：'+emsg(er)))};
   const no=document.createElement('button');no.textContent='取消選取';no.onclick=()=>{sel=null;resizing=false;renderDecos();renderTools()};b.append(rz,vw,del,no);t.append(b)}
  if(cur.mode==='album'){$('meter').textContent='';return}
  const mine=decos.filter(mineO),row=document.createElement('div');row.className='bar';
@@ -321,7 +322,7 @@ $('scene').onclick=async e=>{if(!pending&&cur.id==='p'&&e.target.closest&&e.targ
  if(qx<z[0]||qx>z[2]||fy<z[1]||fy>z[3]){toast('這裡放不下，換個地方試試');return}
  const x=+qx.toFixed(4),y=+fy.toFixed(4),p=pending;pending=null;setPlace(false);
  try{{if(decos.length>=cur.cap){toast('滿了');return}await db.collection(base()+'/decos').add(Object.assign({x,y,by:store('lt_nick')||'匿名',uid,t:Date.now()},p));toast('已放上去');fx(cur.id)}}
- catch(err){toast('儲存失敗：'+(err.code||err.message))}};
+ catch(err){toast('儲存失敗：'+emsg(err))}};
 const NS='http://www.w3.org/2000/svg';
 function strokeSvg(ss){const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','0 0 240 160');s.setAttribute('preserveAspectRatio','none');
  (Array.isArray(ss)?ss:[]).slice(0,60).forEach(st=>{if(!st||!Array.isArray(st.p))return;const pts=st.p.slice(0,800).map(Number).filter(Number.isFinite);let d='';for(let i=0;i+1<pts.length;i+=2)d+=pts[i]+','+pts[i+1]+' ';
@@ -340,20 +341,20 @@ function renderDecos(){const L=$('layer');L.innerHTML='';if(cur.id==='p')return;
 function startResize(ev,e,d){ev.stopPropagation();ev.preventDefault();const rc=e.getBoundingClientRect(),cx=rc.left+rc.width/2,cy=rc.top+rc.height/2,d0=Math.hypot(ev.clientX-cx,ev.clientY-cy)||1,s0=Math.min(2,Math.max(.4,+d.sz||1));let s1=s0;
  const mv=m=>{s1=Math.min(2,Math.max(.4,s0*Math.hypot(m.clientX-cx,m.clientY-cy)/d0));e.style.setProperty('--s',s1)};
  const up=async()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);justDrag=1;setTimeout(()=>justDrag=0,80);
-  try{await db.doc(base()+'/decos/'+d.id).update({sz:+s1.toFixed(3)})}catch(er){toast('調整失敗：'+(er.code||er.message));renderDecos()}};
+  try{await db.doc(base()+'/decos/'+d.id).update({sz:+s1.toFixed(3)})}catch(er){toast('調整失敗：'+emsg(er));renderDecos()}};
  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)}
 function startDrag(ev,e,d){if(pending||ev.button>0)return;const r=$('scene').getBoundingClientRect(),sx=ev.clientX,sy=ev.clientY,z=cur.zone;let mv=false,fx=0,fy=0;
  const pos=m=>{fx=Math.min(1,Math.max(0,(m.clientX-r.left)/r.width));fy=Math.min(1,Math.max(0,(m.clientY-r.top)/r.height))};
  const move=m=>{if(!mv&&Math.hypot(m.clientX-sx,m.clientY-sy)<6)return;mv=true;pos(m);e.style.left=fx*100+'%';e.style.top=fy*100+'%';e.style.zIndex=9};
  const up=async m=>{removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);if(!mv)return;justDrag=1;setTimeout(()=>justDrag=0,80);pos(m);
   if(fx<z[0]||fx>z[2]||fy<z[1]||fy>z[3]){toast('這裡放不下，信回到原位');renderDecos();return}
-  try{await db.doc(base()+'/decos/'+d.id).update({x:+fx.toFixed(4),y:+fy.toFixed(4)});sel=d.id;toast('已移動');renderDecos();renderTools()}catch(er){toast('移動失敗：'+(er.code||er.message));renderDecos()}};
+  try{await db.doc(base()+'/decos/'+d.id).update({x:+fx.toFixed(4),y:+fy.toFixed(4)});sel=d.id;toast('已移動');renderDecos();renderTools()}catch(er){toast('移動失敗：'+emsg(er));renderDecos()}};
  addEventListener('pointermove',move);addEventListener('pointerup',up);addEventListener('pointercancel',up)}
 function openDeco(d){const B=$('smb');B.innerHTML='';const w=document.createElement('div');w.className='vw';const e=mkDeco(d,true);e.style.setProperty('--r','0deg');w.append(e);
  const p=document.createElement('p');p.style.cssText='margin:10px 0 4px;font-size:13px;color:var(--mut)';p.textContent='來自 '+String(d.by||'匿名').slice(0,12)+' 敬上';
  const nt=document.createElement('div');nt.style.cssText='background:#fffaf0;border:1px dashed var(--line);padding:8px 10px;white-space:pre-wrap;word-break:break-word;margin-bottom:8px';nt.textContent=d.note?String(d.note).slice(0,100):'（作者沒有留下說明）';
  const bar=document.createElement('div');bar.className='bar';const cl=document.createElement('button');cl.textContent='關閉';cl.onclick=closeS;bar.append(cl);
- if(admin&&!mineO(d)){const x=document.createElement('button');x.textContent='👑 刪除這件作品';x.onclick=()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}db.doc(base()+'/decos/'+d.id).delete().then(()=>{closeS();toast('已刪除')}).catch(er=>toast('失敗：'+(er.code||er.message)))};bar.append(x)}
+ if(admin&&!mineO(d)){const x=document.createElement('button');x.textContent='👑 刪除這件作品';x.onclick=()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}db.doc(base()+'/decos/'+d.id).delete().then(()=>{closeS();toast('已刪除')}).catch(er=>toast('失敗：'+emsg(er)))};bar.append(x)}
  B.append(w,p,nt,bar);$('sm').classList.add('on')}
 let editId=null,editDraft='',replyTo=null,lastN=0;
 function showR(){const r=$('rbar');r.style.display=replyTo?'block':'none';r.textContent='';if(replyTo){r.append('回覆 '+replyTo.by+'　');const x=document.createElement('button');x.textContent='取消回覆';x.onclick=()=>{replyTo=null;showR()};r.append(x)}}
@@ -367,13 +368,13 @@ let LM=[];function renderMsgs(list){LM=list;const M=$('msgs'),keep=M.scrollTop,e
    ta.oninput=()=>{editDraft=ta.value};e.append(ta);
    const ok=document.createElement('button');ok.textContent='儲存';
    ok.onclick=async()=>{const t=ta.value.trim().slice(0,200);if(!t){toast('內容不能是空的');return}if(!chk(t))return;
-    editId=null;editDraft='';renderMsgs(LM);try{await db.doc(base()+'/msgs/'+m.id).update({text:t,edited:Date.now()});toast('已更新')}catch(err){editId=m.id;editDraft=t;renderMsgs(LM);toast('更新失敗：'+(err.code||err.message))}};
+    editId=null;editDraft='';renderMsgs(LM);try{await db.doc(base()+'/msgs/'+m.id).update({text:t,edited:Date.now()});toast('已更新')}catch(err){editId=m.id;editDraft=t;renderMsgs(LM);toast('更新失敗：'+emsg(err))}};
    const no=document.createElement('button');no.textContent='取消';no.onclick=()=>{editId=null;editDraft='';renderMsgs(list)};
    acts.className='acts row';acts.append(ok,no);e.append(acts);setTimeout(()=>ta.focus(),0)
   }else{
    e.append(document.createTextNode(String(m.text||'').slice(0,200)));acts.append(rp);
    if(own||admin){const ed=document.createElement('button');if(!own)ed.style.display='none';ed.textContent='編輯';ed.onclick=()=>{editId=m.id;editDraft=String(m.text||'');renderMsgs(list)};
-    const x=document.createElement('button');x.textContent='刪除';x.onclick=()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定？';return}db.doc(base()+'/msgs/'+m.id).delete().then(()=>toast('已刪除')).catch(er=>toast('刪除失敗：'+(er.code||er.message)))};acts.append(ed,x)}
+    const x=document.createElement('button');x.textContent='刪除';x.onclick=()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定？';return}db.doc(base()+'/msgs/'+m.id).delete().then(()=>toast('已刪除')).catch(er=>toast('刪除失敗：'+emsg(er)))};acts.append(ed,x)}
    e.append(acts)}
   M.append(e);(kids[m.id]||[]).forEach(k=>item(k,true))};
  list.filter(m=>!(m.re&&ids.has(m.re))).forEach(m=>item(m,false));
@@ -396,7 +397,7 @@ function fx(id){const a=ac(),bg=$('bg'),cls={g:'fg',o:'fo',p:'fp'}[id],w=$('wrap
  bg.classList.remove(cls);void bg.getBoundingClientRect();bg.classList.add(cls);setTimeout(()=>bg.classList.remove(cls),2300);if(a)SND[id]()}
 $('send').onclick=async()=>{const text=$('txt').value.trim();if(!text||!db)return;const by=$('nick').value.trim().slice(0,12)||'匿名';put('lt_nick',by);if(!chk(text,by))return;
  const id=cur.id,re=replyTo?replyTo.id:null;if(!re){$('panel').classList.remove('open');0}
- try{await db.collection(base()+'/msgs').add(Object.assign({text:text.slice(0,200),by,uid,t:Date.now()},re?{re}:{}));$('txt').value='';replyTo=null;showR()}catch(e){toast('送出失敗：'+(e.code||e.message))}};
+ try{await db.collection(base()+'/msgs').add(Object.assign({text:text.slice(0,200),by,uid,t:Date.now()},re?{re}:{}));$('txt').value='';replyTo=null;showR()}catch(e){toast('送出失敗：'+emsg(e))}};
 $('nick').onchange=()=>put('lt_nick',$('nick').value.trim().slice(0,12));
 // 手繪板（寬 3:2）
 let strokes=[],color=COLORS[0],width=2,drawing=false;const cv=$('cv'),cx=cv.getContext('2d');
@@ -485,7 +486,7 @@ $('pf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;co
   SELF.forEach(d=>{const x=document.createElement('button');x.textContent=lab(d).replace('\n','');x.style.cssText='background:'+INF[d][1]+';color:'+INF[d][2]+';border-color:var(--ink)';x.onclick=()=>{date=d;[...bar.children].forEach(y=>y.classList.remove('on'));x.classList.add('on');x.style.outline='3px solid var(--wax)';[...bar.children].forEach(y=>{if(y!==x)y.style.outline=''});dtc(dt,d)};bar.append(x)});
   const ok=document.createElement('button');ok.className='pri';ok.textContent='公開上傳';const cn=document.createElement('button');cn.textContent='取消';cn.onclick=closeS;bar2.append(ok,cn);B.append(bar2);
   const tip=document.createElement('p');tip.style.cssText='font-size:12px;margin:8px 0 0';tip.textContent='上傳後完全公開，任何人都能下載與使用。請勿上傳不當內容。';B.append(tip);
-  ok.onclick=async()=>{if(!date){toast('請選擇資訊框');return}if(!chk(store('lt_nick')))return;ok.disabled=true;try{await db.collection('stamps').add({img,date,by:store('lt_nick')||'匿名',uid,t:Date.now()});closeS();toast('已上傳到集郵冊')}catch(er){ok.disabled=false;toast('上傳失敗：'+(er.code||er.message))}};
+  ok.onclick=async()=>{if(!date){toast('請選擇資訊框');return}if(!chk(store('lt_nick')))return;ok.disabled=true;try{await db.collection('stamps').add({img,date,by:store('lt_nick')||'匿名',uid,t:Date.now()});closeS();toast('已上傳到集郵冊')}catch(er){ok.disabled=false;toast('上傳失敗：'+emsg(er))}};
   $('sm').classList.add('on')};im.onerror=()=>toast('無法讀取這張圖片');im.src=u};
 function closeS(){sOpen=null;if(cUn){cUn();cUn=null}$('sm').classList.remove('on')}
 $('sm').onclick=e=>{if(e.target===$('sm'))closeS()};
@@ -493,14 +494,14 @@ function openStamp(id){sOpen=id;if(cUn)cUn();cUn=db.collection('scomments').wher
 let SC=[];
 function drawStamp(){const p=PH[sOpen],B=$('smb');if(!p){closeS();return}const my=LK[p.id]?.mine,n=LK[p.id]?.n||0;B.innerHTML='';const im=new Image();im.src=p.img;B.append(im);
  const bar=document.createElement('div');bar.className='bar';
- const lk=document.createElement('button');lk.textContent=(my?'♥ 已讚 ':'♡ 讚 ')+n;lk.onclick=async()=>{if(!uid){toast('需要登入才能按讚');return}try{const r=db.doc('likes/'+p.id+'_'+uid);my?await r.delete():await r.set({s:p.id,uid})}catch(e){toast('失敗：'+(e.code||e.message))}};
+ const lk=document.createElement('button');lk.textContent=(my?'♥ 已讚 ':'♡ 讚 ')+n;lk.onclick=async()=>{if(!uid){toast('需要登入才能按讚');return}try{const r=db.doc('likes/'+p.id+'_'+uid);my?await r.delete():await r.set({s:p.id,uid})}catch(e){toast('失敗：'+emsg(e))}};
  const dl=document.createElement('a');dl.href=p.img;dl.download='stamp.jpg';dl.textContent='⬇ 下載';dl.style.cssText='padding:2px 8px;border:1px solid var(--line)';
  const cl=document.createElement('button');cl.textContent='關閉';cl.onclick=closeS;bar.append(lk,dl,cl);
- if(canDel(p)){const d=document.createElement('button');d.textContent=mineO(p)?'刪除郵票':'👑 刪除郵票';d.onclick=()=>{if(!d.dataset.s){d.dataset.s=1;d.textContent='確定？';return}db.doc('stamps/'+p.id).delete().then(()=>toast('已刪除')).catch(e=>toast('失敗：'+(e.code||e.message)))};bar.append(d)}
+ if(canDel(p)){const d=document.createElement('button');d.textContent=mineO(p)?'刪除郵票':'👑 刪除郵票';d.onclick=()=>{if(!d.dataset.s){d.dataset.s=1;d.textContent='確定？';return}db.doc('stamps/'+p.id).delete().then(()=>toast('已刪除')).catch(e=>toast('失敗：'+emsg(e)))};bar.append(d)}
  B.append(bar);const inf=document.createElement('p');inf.textContent=(p.date.includes('/')?'公演日期：':'郵票框：')+lab(p.date).replace('\n','')+' · 上傳者：'+String(p.by||'匿名').slice(0,12);B.append(inf);
- SC.forEach(c=>{const d=document.createElement('div');d.className='c';d.textContent=String(c.by||'匿名').slice(0,12)+'：'+String(c.text||'').slice(0,120);if(canDel(c)){const x=document.createElement('button');x.textContent='刪除';x.style.cssText='margin-left:6px;font-size:11px';x.onclick=()=>db.doc('scomments/'+c.id).delete().catch(e=>toast('失敗：'+(e.code||e.message)));d.append(x)}B.append(d)});
+ SC.forEach(c=>{const d=document.createElement('div');d.className='c';d.textContent=String(c.by||'匿名').slice(0,12)+'：'+String(c.text||'').slice(0,120);if(canDel(c)){const x=document.createElement('button');x.textContent='刪除';x.style.cssText='margin-left:6px;font-size:11px';x.onclick=()=>db.doc('scomments/'+c.id).delete().catch(e=>toast('失敗：'+emsg(e)));d.append(x)}B.append(d)});
  const t=document.createElement('input');t.maxLength=120;t.placeholder='留言…';const sb=document.createElement('button');sb.className='pri';sb.textContent='送出留言';
- sb.onclick=async()=>{const v=t.value.trim();if(!v)return;if(!chk(v,store('lt_nick')))return;try{await db.collection('scomments').add({s:p.id,text:v,by:store('lt_nick')||'匿名',uid,t:Date.now()});t.value=''}catch(e){toast('送出失敗：'+(e.code||e.message))}};B.append(t,sb)}
+ sb.onclick=async()=>{const v=t.value.trim();if(!v)return;if(!chk(v,store('lt_nick')))return;try{await db.collection('scomments').add({s:p.id,text:v,by:store('lt_nick')||'匿名',uid,t:Date.now()});t.value=''}catch(e){toast('送出失敗：'+emsg(e))}};B.append(t,sb)}
 function startStamps(){db.collection('stamps').orderBy('t','desc').limit(80).onSnapshot(q=>{PH={};q.docs.forEach(d=>PH[d.id]=Object.assign({id:d.id},d.data()));if(cur.mode==='album')renderAlbum();renderDecos();renderPicker()},()=>{});
  db.collection('likes').limit(5000).onSnapshot(q=>{LK={};q.docs.forEach(d=>{const v=d.data();const o=LK[v.s]=LK[v.s]||{n:0};o.n++;if(v.uid===uid)o.mine=true});if(cur.mode==='album')renderAlbum();else if(sOpen)drawStamp()},()=>{})}
 
@@ -560,13 +561,13 @@ function openWriter(ed){if(!db){toast('尚未連上資料庫');return}
    else{d.text=text;await ref.set(d)}
    L.classList.remove('on');fx('p');setTimeout(()=>{const w=$('wrap');w.scrollTo({left:$('scene').offsetWidth*.62-w.clientWidth/2,behavior:'smooth'})},2400);
    if(code)setTimeout(()=>showCode(code),2700);else setTimeout(()=>toast('信已經放在來信牆上了'),2600)
-  }catch(er){send.disabled=false;toast('送出失敗：'+(er.code||er.message))}};
+  }catch(er){send.disabled=false;toast('送出失敗：'+emsg(er))}};
  L.classList.add('on');setTimeout(()=>ta.focus(),0)}
 function showCode(code){const B=$('smb');B.innerHTML='';B.append(mk('p','trh','🔒 你的加密代碼'));const c=mk('div','','');c.textContent=code;c.style.cssText='font-size:42px;letter-spacing:.3em;text-align:center;padding:10px;background:#fffaf0;border:2px dashed var(--pen);margin:8px 0';
  const bar=mk('div','bar'),cp=mk('button','','複製代碼'),ok=mk('button','pri','我記下了');cp.onclick=()=>{try{navigator.clipboard.writeText(code).then(()=>toast('已複製'))}catch(e){toast('請手動記下代碼')}};ok.onclick=closeS;bar.append(cp,ok);
  B.append(c,mk('p','','把這組代碼分享給想讓他讀信的人。牆上的「🔒 加密信封」輸入代碼後，就會顯示這封信。你本人隨時可以從「我寄出的信」直接打開，不需要代碼。'),bar);$('sm').classList.add('on')}
 async function openMail(m,codeIn){let text=m.text,code=codeIn;
- if(m.enc){if(!code&&(admin||mineO(m))){try{code=(await db.doc('secrets/'+m.id).get()).data().code}catch(e){toast('讀取代碼失敗：'+(e.code||e.message));return}}
+ if(m.enc){if(!code&&(admin||mineO(m))){try{code=(await db.doc('secrets/'+m.id).get()).data().code}catch(e){toast('讀取代碼失敗：'+emsg(e));return}}
   if(!code)return;try{text=await decT(m.ct,code)}catch(e){toast('代碼不正確');return}}
  const show=()=>showLetter(m,text,code);if(mineO(m)||admin)show();else tearScreen(show)}
 function tearScreen(cb){const B=$('smb');B.innerHTML='';B.append(mk('p','trh','請沿著虛線，由左向右撕開 ✂'));
@@ -582,14 +583,14 @@ function showLetter(m,text,code){const B=$('smb');B.innerHTML='';markOpen(m.id);
  const bar=mk('div','bar'),cl=mk('button','','關閉');cl.onclick=closeS;bar.append(cl);
  if(m.enc&&code&&(mineO(m)||admin))bar.append(mk('span','meter','🔒 代碼 '+code));
  if(mineO(m)){const ed=mk('button','','編輯內容');ed.onclick=()=>{closeS();openWriter({m,text,code})};bar.append(ed)}
- if(canDel(m)){const x=mk('button','',mineO(m)?'刪除這封信':'👑 刪除這封信');x.onclick=async()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}try{const bt=db.batch();bt.delete(db.doc(MB+m.id));if(m.enc)bt.delete(db.doc('secrets/'+m.id));await bt.commit();closeS();toast('已刪除')}catch(er){toast('刪除失敗：'+(er.code||er.message))}};bar.append(x)}
+ if(canDel(m)){const x=mk('button','',mineO(m)?'刪除這封信':'👑 刪除這封信');x.onclick=async()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}try{const bt=db.batch();bt.delete(db.doc(MB+m.id));if(m.enc)bt.delete(db.doc('secrets/'+m.id));await bt.commit();closeS();toast('已刪除')}catch(er){toast('刪除失敗：'+emsg(er))}};bar.append(x)}
  B.append(pa,bar);$('sm').classList.add('on')}
 function openSealed(){if(admin){openList('enc');return}
  const B=$('smb');B.innerHTML='';B.append(mk('p','trh','🔒 加密信件'),mk('p','','請輸入寄信人給你的 5 位數代碼：'));
  const i=mk('input');i.inputMode='numeric';i.maxLength=5;i.placeholder='例如 12345';i.style.cssText='text-align:center;font-size:22px;letter-spacing:.3em';
  const bar=mk('div','bar'),ok=mk('button','pri','開啟'),cl=mk('button','','關閉');cl.onclick=closeS;
  ok.onclick=async()=>{const c=i.value.trim();if(!/^\d{5}$/.test(c)){toast('請輸入 5 位數字');return}ok.disabled=true;
-  try{const q=await db.collection('letters/p/mails').where('ch','==',await sha(c)).limit(1).get();ok.disabled=false;if(q.empty){toast('找不到這組代碼的信');return}await openMail(Object.assign({id:q.docs[0].id},q.docs[0].data()),c)}catch(e){ok.disabled=false;toast('失敗：'+(e.code||e.message))}};
+  try{const q=await db.collection('letters/p/mails').where('ch','==',await sha(c)).limit(1).get();ok.disabled=false;if(q.empty){toast('找不到這組代碼的信');return}await openMail(Object.assign({id:q.docs[0].id},q.docs[0].data()),c)}catch(e){ok.disabled=false;toast('失敗：'+emsg(e))}};
  bar.append(ok,cl);B.append(i,bar);$('sm').classList.add('on');setTimeout(()=>i.focus(),0)}
 function openList(kind){const B=$('smb');B.innerHTML='';B.append(mk('p','trh',{all:'📮 全部來信',mine:'🧾 我寄出的信',enc:'👑 加密信件（管理員）'}[kind]));
  const f=mk('input');f.placeholder='搜尋收信人或署名…';const box=mk('div','lst');
@@ -615,12 +616,15 @@ renderTabs();enter(cur);
   if(!window.firebase)throw new Error('Firebase SDK 沒載入（請檢查網路）');
   if(firebaseConfig.apiKey==='YOUR_API_KEY'){warn('尚未設定 Firebase：請在 index.html 貼上 firebaseConfig。');return}
   firebase.initializeApp(firebaseConfig);
-  try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
+  for(const pm of ['LOCAL','SESSION','NONE']){try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence[pm]);break}catch(e){}}
   let initDone=false;
-  firebase.auth().onAuthStateChanged(u=>{if(!u){if(initDone)firebase.auth().signInAnonymously().catch(()=>{});return}uid=u.uid;admin=!u.isAnonymous;$('adm').textContent=admin?'👑 管理員模式（點此登出）':'管理員登入';if(db)refreshAll()});
-  $('adm').onclick=async()=>{if(admin){await firebase.auth().signOut();toast('已登出管理員');return}const em=prompt('管理員 Email');if(!em)return;const pw=prompt('密碼');if(!pw)return;try{await firebase.auth().signInWithEmailAndPassword(em.trim(),pw);toast('管理員登入成功')}catch(e){toast('登入失敗：'+(e.code||e.message))}};
-  try{uid=(await firebase.auth().signInAnonymously()).user.uid}catch(e){console.warn(e);uid=store('lt_uid')||('g'+Math.random().toString(36).slice(2,12));put('lt_uid',uid);toast('匿名登入失敗（'+(e.code||'')+'）：仍可留言，但無法按讚或編輯');warn('身分驗證失敗（'+(e.code||e.message)+'）：目前無法編輯或刪除自己的作品與留言。請到 Firebase 主控台 → Authentication → 登入方式，確認「匿名」已啟用，並把網站網域加入「已授權網域」。')}
-  initDone=true;db=firebase.firestore();try{db.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
+  firebase.auth().onAuthStateChanged(u=>{if(!u){if(initDone)firebase.auth().signInAnonymously().catch(()=>{});return}uid=u.uid;admin=!u.isAnonymous;$('who').textContent='身分：'+(u.isAnonymous?'匿名 ':'管理員 ')+'#'+u.uid.slice(0,6)+'（已驗證，可編輯自己的作品）';$('adm').textContent=admin?'👑 管理員模式（點此登出）':'管理員登入';if(db)refreshAll()});
+  $('adm').onclick=async()=>{if(admin){await firebase.auth().signOut();toast('已登出管理員');return}const em=prompt('管理員 Email');if(!em)return;const pw=prompt('密碼');if(!pw)return;try{await firebase.auth().signInWithEmailAndPassword(em.trim(),pw);toast('管理員登入成功')}catch(e){toast('登入失敗：'+emsg(e))}};
+  try{uid=(await firebase.auth().signInAnonymously()).user.uid}catch(e){console.warn(e);uid=store('lt_uid')||('g'+Math.random().toString(36).slice(2,12));put('lt_uid',uid);$('who').textContent='身分：未驗證（只能新增，無法編輯或刪除；請見上方提示）';toast('匿名登入失敗（'+(e.code||'')+'）：仍可留言，但無法按讚或編輯');warn('身分驗證失敗（'+emsg(e)+'）：目前無法編輯或刪除自己的作品與留言。請到 Firebase 主控台 → Authentication → 登入方式，確認「匿名」已啟用，並把網站網域加入「已授權網域」。')}
+  initDone=true;db=firebase.firestore();try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
+  {const tmo=p=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j({code:'連線逾時，請檢查網路後再試'}),12000))]),_doc=db.doc.bind(db),_col=db.collection.bind(db);
+   db.doc=p=>{const r=_doc(p);['update','delete','set'].forEach(k=>{const f=r[k].bind(r);r[k]=(...a)=>tmo(f(...a))});return r};
+   db.collection=p=>{const c=_col(p),f=c.add.bind(c);c.add=(...a)=>tmo(f(...a));return c}}
   startStamps();enter(cur);
  }catch(e){console.error(e);warn('無法連上資料庫：'+(e.message||e))}
 })();
