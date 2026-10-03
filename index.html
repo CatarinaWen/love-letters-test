@@ -189,6 +189,10 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:#e8a31766}
 #intro .slip{position:relative;right:auto;top:auto;width:182px;margin:0 0 14px auto;padding:34px 10px 10px;font-size:15px;line-height:1.6}
 #intro .clip{right:44px;top:8px;width:26px;height:58px;transform:rotate(20deg)}#intro h2{font-size:20px}}
 .ov{align-items:flex-start}.ov>*{margin:auto}.pad{max-height:none;overflow:visible}
+.c.cr{margin-left:18px;border-left:3px solid var(--pink);padding-left:6px}
+.rpl{margin-top:12px;padding-top:8px;border-top:2px dashed var(--line)}.rph{font-size:14px;color:var(--wax);margin-bottom:6px}.rpi{background:#fffaf0;border:1px solid var(--line);border-radius:4px;padding:6px 8px;margin:6px 0;font-size:14px}.rpi b{display:block;font-size:11px;color:var(--mut);font-weight:400}.rpt{white-space:pre-wrap;word-break:break-word}
+.en em{position:absolute;right:-6px;top:-9px;background:var(--wax);color:#fff;font-style:normal;font-size:calc(var(--ew)*.15);border-radius:999px;padding:0 5px;line-height:1.4;z-index:2}
+.rh.rot{left:50%;top:-26px;background:#fff;color:var(--wax);border-color:var(--wax);font-size:12px;line-height:12px;text-align:center;cursor:grab;font-weight:700}
 </style></head><body>
 <div style="position:fixed;left:0;top:0;z-index:200;background:#c23b32;color:#fff;font-size:12px;padding:2px 10px;border-radius:0 0 8px 0;pointer-events:none">🧪 測試版</div>
 <script>function enterGame(){try{if(typeof ac==="function")ac()}catch(e){}var i=document.getElementById("intro");if(i&&i.parentNode)i.parentNode.removeChild(i);try{window.scrollTo(0,0)}catch(e){}}</script>
@@ -284,6 +288,7 @@ const mineO=o=>!!uid&&o.uid===uid,canDel=o=>mineO(o)||admin;
 function refreshAll(){renderDecos();renderTools();renderMsgs(LM);if(cur.mode==='album')renderAlbum()}
 $('nick').value=store('lt_nick');$('who').textContent='此裝置的身分 #'+uid.slice(1,7)+'（不需登入，可新增、編輯、刪除、移動自己的作品與留言）';
 const base=()=>'letters/'+cur.id;
+const angOf=d=>(d.rt!=null&&isFinite(+d.rt))?Math.max(-180,Math.min(180,+d.rt)):rot(d.id);
 const rot=id=>{let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))%997;return(h%9)-4};
 const stampFill=(el,i)=>{if(i&&i.img){el.className=el.className.replace(/ ?ph/,'')+' ph';el.style.backgroundImage='url('+i.img+')';el.textContent='';const sp=document.createElement('span');sp.textContent=lab(i.date);sp.className=i.date==='mg'?'mg':'';const q=INF[i.date];if(q){sp.style.background=q[1];sp.style.color=q[2]}el.append(sp);return}el.className=el.className.replace(/ ?ph/,'');el.style.backgroundImage='';const s=STAMPS[i]||STAMPS[0];el.style.setProperty('--sc',s[2]);el.textContent='';el.append(s[0],document.createElement('br'),s[1])};
 function renderTabs(n){$('tabs').innerHTML='';SPACES.forEach(s=>{const b=document.createElement('button');b.className='tab'+(s.id===cur.id?' on':'');
@@ -292,16 +297,16 @@ function enter(s){
  cur=s;pending=null;sel=null;unsubs.forEach(u=>u());unsubs=[];setPlace(false);renderTabs();$('bg').innerHTML=SCENES[s.id];$('q').textContent=s.q;
  $('bname').textContent='· '+s.name;$('layer').innerHTML='';$('msgs').innerHTML='';decos=[];renderTools();const al=s.mode==='album';document.body.classList.toggle('album',al);document.body.classList.toggle('nopanel',al||s.id==='p');MAILS=[];renderWall();finding=false;resizing=false;$('wrap').style.display=al?'none':'';$('album').style.display=al?'block':'none';$('hint').style.display='none';replyTo=null;showR();if(al)renderAlbum();if(!db)return;
  const L=(n,o,lim,cb)=>unsubs.push(db.collection(base()+'/'+n).orderBy('t',o).limit(lim).onSnapshot(q=>cb(q.docs.map(d=>Object.assign({id:d.id},d.data()))),()=>{}));
- L('decos','asc',400,l=>{decos=l;renderDecos();renderTools();renderTabs(cur.id==='p'?MAILS.length:l.length)});L('msgs','asc',300,renderMsgs);if(s.id==='p')L('mails','desc',500,l=>{MAILS=l;renderWall();renderTools();renderTabs(l.length)})}
+ L('decos','asc',400,l=>{decos=l;renderDecos();renderTools();renderTabs(cur.id==='p'?MAILS.length:l.length)});L('msgs','asc',300,renderMsgs);if(s.id==='p'){L('mails','desc',500,l=>{MAILS=l;renderWall();renderTools();renderTabs(l.length)});L('mailre','asc',800,l=>{MRE=l;renderWall();if(curView&&$('sm').classList.contains('on'))showLetter(curView.m,curView.text,curView.code)})}}
 function renderTools(){
  const t=$('tools');t.innerHTML='';$('meter').textContent=cur.id==='p'?'來信 '+MAILS.length+' 封':'已有 '+decos.length+' / '+cur.cap+' 件';
  const own=decos.find(d=>d.id===sel&&mineO(d));
  if(own){const b=document.createElement('div');b.className='bar';b.append('這是你放的信：直接拖曳它就能移動　');
   const dref=()=>db.doc(base()+'/decos/'+own.id);
-  const rz=document.createElement('button');rz.textContent=resizing?'完成調整':'調整大小';rz.className=resizing?'on':'';rz.onclick=()=>{resizing=!resizing;renderDecos();renderTools();if(resizing)toast('拖曳裝飾四個角的圓點調整大小')};
+  const rz=document.createElement('button');rz.textContent=resizing?'完成調整':'調整大小／角度';rz.className=resizing?'on':'';rz.onclick=()=>{resizing=!resizing;renderDecos();renderTools();if(resizing)toast('拖曳四個角的圓點調整大小，上方的 ↻ 調整角度')};
   const vw=document.createElement('button');vw.textContent='放大看說明';vw.onclick=()=>openDeco(own);
   const del=document.createElement('button');del.textContent='刪除';del.onclick=()=>{if(!del.dataset.s){del.dataset.s=1;del.textContent='確定刪除？';return}dref().delete().then(()=>{sel=null;renderTools();toast('已刪除')}).catch(er=>toast('刪除失敗：'+emsg(er)))};
-  const no=document.createElement('button');no.textContent='取消選取';no.onclick=()=>{sel=null;resizing=false;renderDecos();renderTools()};b.append(rz,vw,del,no);t.append(b)}
+  const no=document.createElement('button');no.textContent='取消選取';no.onclick=()=>{sel=null;resizing=false;renderDecos();renderTools()};const tz=document.createElement('button');tz.textContent='轉正';tz.onclick=()=>dref().update({rt:0}).catch(er=>toast('失敗：'+emsg(er)));b.append(rz,...(resizing?[tz]:[]),vw,del,no);t.append(b)}
  if(cur.mode==='album'){$('meter').textContent='';return}
  const mine=decos.filter(mineO),row=document.createElement('div');row.className='bar';
  if(cur.id==='p'){}
@@ -333,11 +338,18 @@ function mkDeco(d,big){const fr=FR.some(f=>f[0]===d.fr)?d.fr:'note';const e=docu
 let justDrag=0;
 function renderDecos(){const L=$('layer');L.innerHTML='';if(cur.id==='p')return;
  decos.forEach(d=>{const e=mkDeco(d),own=mineO(d);e.className+=(own?' mine':'')+(d.id===sel?' sel':'')+(finding&&own?' find':'');
-  e.style.left=Math.min(1,Math.max(0,+d.x||0))*100+'%';e.style.top=Math.min(1,Math.max(0,+d.y||0))*100+'%';e.style.setProperty('--r',rot(d.id)+'deg');e.style.setProperty('--s',Math.min(2,Math.max(.4,+d.sz||1)));e.title='by '+String(d.by||'匿名').slice(0,12);
+  e.style.left=Math.min(1,Math.max(0,+d.x||0))*100+'%';e.style.top=Math.min(1,Math.max(0,+d.y||0))*100+'%';e.style.setProperty('--r',angOf(d)+'deg');e.style.setProperty('--s',Math.min(2,Math.max(.4,+d.sz||1)));e.title='by '+String(d.by||'匿名').slice(0,12);
   e.onclick=ev=>{if(pending)return;ev.stopPropagation();if(justDrag)return;if(own){sel=sel===d.id?null:d.id;resizing=false;renderDecos();renderTools()}else openDeco(d)};
   if(own)e.onpointerdown=ev=>startDrag(ev,e,d);
+  if(own&&d.id===sel&&resizing)addRot(e,d);
   if(own&&d.id===sel&&resizing)[[0,0],[100,0],[0,100],[100,100]].forEach(([hx,hy])=>{const h=document.createElement('div');h.className='rh';h.style.left=hx+'%';h.style.top=hy+'%';h.onclick=ev=>ev.stopPropagation();h.onpointerdown=ev=>startResize(ev,e,d);e.append(h)});
   L.append(e)})}
+function addRot(e,d){const h=document.createElement('div');h.className='rh rot';h.textContent='↻';h.onclick=ev=>ev.stopPropagation();h.onpointerdown=ev=>startRotate(ev,e,d);e.append(h)}
+function startRotate(ev,e,d){ev.stopPropagation();ev.preventDefault();const rc=e.getBoundingClientRect(),cx=rc.left+rc.width/2,cy=rc.top+rc.height/2,a0=angOf(d),t0=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI;let a1=a0;
+ const mv=m=>{let a=a0+Math.atan2(m.clientY-cy,m.clientX-cx)*180/Math.PI-t0;a=((a+180)%360+360)%360-180;if(Math.abs(a)<3)a=0;a1=a;e.style.setProperty('--r',a1+'deg')};
+ const up=async()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);justDrag=1;setTimeout(()=>justDrag=0,80);
+  try{await db.doc(base()+'/decos/'+d.id).update({rt:+a1.toFixed(1)})}catch(er){toast('調整失敗：'+emsg(er));renderDecos()}};
+ addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)}
 function startResize(ev,e,d){ev.stopPropagation();ev.preventDefault();const rc=e.getBoundingClientRect(),cx=rc.left+rc.width/2,cy=rc.top+rc.height/2,d0=Math.hypot(ev.clientX-cx,ev.clientY-cy)||1,s0=Math.min(2,Math.max(.4,+d.sz||1));let s1=s0;
  const mv=m=>{s1=Math.min(2,Math.max(.4,s0*Math.hypot(m.clientX-cx,m.clientY-cy)/d0));e.style.setProperty('--s',s1)};
  const up=async()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);justDrag=1;setTimeout(()=>justDrag=0,80);
@@ -488,10 +500,10 @@ $('pf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;co
   const tip=document.createElement('p');tip.style.cssText='font-size:12px;margin:8px 0 0';tip.textContent='上傳後完全公開，任何人都能下載與使用。請勿上傳不當內容。';B.append(tip);
   ok.onclick=async()=>{if(!date){toast('請選擇資訊框');return}if(!chk(store('lt_nick')))return;ok.disabled=true;try{await db.collection('stamps').add({img,date,by:store('lt_nick')||'匿名',uid,t:Date.now()});closeS();toast('已上傳到集郵冊')}catch(er){ok.disabled=false;toast('上傳失敗：'+emsg(er))}};
   $('sm').classList.add('on')};im.onerror=()=>toast('無法讀取這張圖片');im.src=u};
-function closeS(){sOpen=null;if(cUn){cUn();cUn=null}$('sm').classList.remove('on')}
+function closeS(){sOpen=null;curView=null;if(cUn){cUn();cUn=null}$('sm').classList.remove('on')}
 $('sm').onclick=e=>{if(e.target===$('sm'))closeS()};
-function openStamp(id){sOpen=id;if(cUn)cUn();cUn=db.collection('scomments').where('s','==',id).onSnapshot(q=>{SC=q.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.t-b.t);drawStamp()},()=>{});SC=[];drawStamp();$('sm').classList.add('on')}
-let SC=[];
+function openStamp(id){sOpen=id;scReply=null;scDraft='';if(cUn)cUn();cUn=db.collection('scomments').where('s','==',id).onSnapshot(q=>{SC=q.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.t-b.t);drawStamp()},()=>{});SC=[];drawStamp();$('sm').classList.add('on')}
+let SC=[],scReply=null,scDraft='';
 function drawStamp(){const p=PH[sOpen],B=$('smb');if(!p){closeS();return}const my=LK[p.id]?.mine,n=LK[p.id]?.n||0;B.innerHTML='';const im=new Image();im.src=p.img;B.append(im);
  const bar=document.createElement('div');bar.className='bar';
  const lk=document.createElement('button');lk.textContent=(my?'♥ 已讚 ':'♡ 讚 ')+n;lk.onclick=async()=>{if(!uid){toast('需要登入才能按讚');return}try{const r=db.doc('likes/'+p.id+'_'+uid);my?await r.delete():await r.set({s:p.id,uid})}catch(e){toast('失敗：'+emsg(e))}};
@@ -499,15 +511,22 @@ function drawStamp(){const p=PH[sOpen],B=$('smb');if(!p){closeS();return}const m
  const cl=document.createElement('button');cl.textContent='關閉';cl.onclick=closeS;bar.append(lk,dl,cl);
  if(canDel(p)){const d=document.createElement('button');d.textContent=mineO(p)?'刪除郵票':'👑 刪除郵票';d.onclick=()=>{if(!d.dataset.s){d.dataset.s=1;d.textContent='確定？';return}db.doc('stamps/'+p.id).delete().then(()=>toast('已刪除')).catch(e=>toast('失敗：'+emsg(e)))};bar.append(d)}
  B.append(bar);const inf=document.createElement('p');inf.textContent=(p.date.includes('/')?'公演日期：':'郵票框：')+lab(p.date).replace('\n','')+' · 上傳者：'+String(p.by||'匿名').slice(0,12);B.append(inf);
- SC.forEach(c=>{const d=document.createElement('div');d.className='c';d.textContent=String(c.by||'匿名').slice(0,12)+'：'+String(c.text||'').slice(0,120);if(canDel(c)){const x=document.createElement('button');x.textContent='刪除';x.style.cssText='margin-left:6px;font-size:11px';x.onclick=()=>db.doc('scomments/'+c.id).delete().catch(e=>toast('失敗：'+emsg(e)));d.append(x)}B.append(d)});
- const t=document.createElement('input');t.maxLength=120;t.placeholder='留言…';const sb=document.createElement('button');sb.className='pri';sb.textContent='送出留言';
- sb.onclick=async()=>{const v=t.value.trim();if(!v)return;if(!chk(v,store('lt_nick')))return;try{await db.collection('scomments').add({s:p.id,text:v,by:store('lt_nick')||'匿名',uid,t:Date.now()});t.value=''}catch(e){toast('送出失敗：'+emsg(e))}};B.append(t,sb)}
+ const ids=new Set(SC.map(c=>c.id)),kids={};SC.forEach(c=>{if(c.re&&ids.has(c.re))(kids[c.re]=kids[c.re]||[]).push(c)});
+ const item=(c,isR)=>{const d=document.createElement('div');d.className='c'+(isR?' cr':'');d.append(String(c.by||'匿名').slice(0,12)+'：'+String(c.text||'').slice(0,120)+' ');
+  const rp=document.createElement('button');rp.textContent='回覆';rp.style.cssText='margin-left:6px;font-size:11px';rp.onclick=()=>{scReply={id:c.re&&ids.has(c.re)?c.re:c.id,by:String(c.by||'匿名').slice(0,12)};drawStamp()};d.append(rp);
+  if(canDel(c)){const x=document.createElement('button');x.textContent='刪除';x.style.cssText='margin-left:6px;font-size:11px';x.onclick=()=>db.doc('scomments/'+c.id).delete().catch(e=>toast('失敗：'+emsg(e)));d.append(x)}
+  B.append(d);(kids[c.id]||[]).forEach(k=>item(k,true))};
+ SC.filter(c=>!(c.re&&ids.has(c.re))).forEach(c=>item(c,false));
+ if(scReply){const rb=document.createElement('div');rb.style.cssText='font-size:12px;color:var(--wax);margin-top:6px';rb.append('回覆 '+scReply.by+'　');const cx=document.createElement('button');cx.textContent='取消回覆';cx.style.fontSize='11px';cx.onclick=()=>{scReply=null;drawStamp()};rb.append(cx);B.append(rb)}
+ const t=document.createElement('input');t.maxLength=120;t.placeholder=scReply?'寫下回覆…':'留言…';t.value=scDraft;t.oninput=()=>{scDraft=t.value};const sb=document.createElement('button');sb.className='pri';sb.textContent=scReply?'送出回覆':'送出留言';
+ sb.onclick=async()=>{const v=t.value.trim();if(!v)return;if(!chk(v,store('lt_nick')))return;try{await db.collection('scomments').add(Object.assign({s:p.id,text:v,by:store('lt_nick')||'匿名',uid,t:Date.now()},scReply?{re:scReply.id}:{}));scDraft='';scReply=null;t.value=''}catch(e){toast('送出失敗：'+emsg(e))}};
+ B.append(t,sb)}
 function startStamps(){db.collection('stamps').orderBy('t','desc').limit(80).onSnapshot(q=>{PH={};q.docs.forEach(d=>PH[d.id]=Object.assign({id:d.id},d.data()));if(cur.mode==='album')renderAlbum();renderDecos();renderPicker()},()=>{});
  db.collection('likes').limit(5000).onSnapshot(q=>{LK={};q.docs.forEach(d=>{const v=d.data();const o=LK[v.s]=LK[v.s]||{n:0};o.n++;if(v.uid===uid)o.mine=true});if(cur.mode==='album')renderAlbum();else if(sOpen)drawStamp()},()=>{})}
 
 // ===== 交換信件（麥高芬郵政） =====
 const PAPERS=[['cream','米黃稿紙'],['air','航空信箋'],['rose','玫瑰花邊'],['grid','方格稿紙'],['kraft','牛皮紙'],['night','星夜藍']];
-const te=new TextEncoder(),td=new TextDecoder();let MAILS=[];
+const te=new TextEncoder(),td=new TextDecoder();let MAILS=[],MRE=[],curView=null,rpDraft='';
 const OP=new Set((()=>{try{return JSON.parse(store('lt_open')||'[]')}catch(e){return[]}})());
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
 const fdate=t=>new Date(+t||0).toLocaleString('zh-TW',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -532,7 +551,7 @@ function renderWall(){const Wl=$('wall');Wl.innerHTML='';if(cur.id!=='p')return;
   for(let i=0;i<Math.min(n,cap);i++)pos.push([zx+(i%cols)*sx,zy+Math.floor(i/cols)*sy])}
  pos.forEach(([x,y],i)=>{const it=items[i],e=mk('div','en');e.style.cssText='left:'+x+'px;top:'+y+'px;width:'+ew+'px;height:'+ew/1.5+'px;--ew:'+ew+'px;z-index:'+(n-i)+';transform:rotate('+(ew>SH*.12?rot(it.m?it.m.id:'s')*.7:0)+'deg)';
   if(it.sealed){e.classList.add('sealed');e.append(mk('i'));if(ew>=64)e.append(mk('span','','🔒 加密信 ×'+it.n));e.title='加密信件：輸入代碼才能讀';e.onclick=ev=>{if(pending)return;ev.stopPropagation();openSealed()}}
-  else{const m=it.m,op=OP.has(m.id)||mineO(m);if(op)e.classList.add('op');else e.append(mk('i'));if(ew>=64&&m.to)e.append(mk('span','','致 '+m.to));e.title='致 '+(m.to||'所有人');e.onclick=ev=>{if(pending)return;ev.stopPropagation();openMail(m)}}
+  else{const m=it.m,op=OP.has(m.id)||mineO(m);if(op)e.classList.add('op');else e.append(mk('i'));if(ew>=64&&m.to)e.append(mk('span','','致 '+m.to));{const rc=MRE.filter(r=>r.re===m.id).length;if(rc&&mineO(m))e.append(mk('em','','💬'+rc))}e.title='致 '+(m.to||'所有人');e.onclick=ev=>{if(pending)return;ev.stopPropagation();openMail(m)}}
   Wl.append(e)});
  if(hidden>0){const b=mk('button','mbm','＋'+hidden+' 封較舊的信 →全部來信');b.style.left=(zx+zw)+'px';b.style.top=(zy+zh)+'px';b.onclick=ev=>{ev.stopPropagation();openList('all')};Wl.append(b)}}
 addEventListener('resize',()=>renderWall());
@@ -584,8 +603,22 @@ function showLetter(m,text,code){const B=$('smb');B.innerHTML='';markOpen(m.id);
  const bar=mk('div','bar'),cl=mk('button','','關閉');cl.onclick=closeS;bar.append(cl);
  if(m.enc&&code&&(mineO(m)||admin))bar.append(mk('span','meter','🔒 代碼 '+code));
  if(mineO(m)){const ed=mk('button','','編輯內容');ed.onclick=()=>{closeS();openWriter({m,text,code})};bar.append(ed)}
- if(canDel(m)){const x=mk('button','',mineO(m)?'刪除這封信':'👑 刪除這封信');x.onclick=async()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}try{const bt=db.batch();bt.delete(db.doc(MB+m.id));if(m.enc)bt.delete(db.doc('secrets/'+m.id));await bt.commit();closeS();toast('已刪除')}catch(er){toast('刪除失敗：'+emsg(er))}};bar.append(x)}
- B.append(pa,bar);$('sm').classList.add('on')}
+ if(canDel(m)){const x=mk('button','',mineO(m)?'刪除這封信':'👑 刪除這封信');x.onclick=async()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}try{const bt=db.batch();bt.delete(db.doc(MB+m.id));if(m.enc)bt.delete(db.doc('secrets/'+m.id));MRE.filter(r=>r.re===m.id).forEach(r=>bt.delete(db.doc('letters/p/mailre/'+r.id)));await bt.commit();closeS();toast('已刪除')}catch(er){toast('刪除失敗：'+emsg(er))}};bar.append(x)}
+ B.append(pa,bar);curView={m,text,code};renderReplies(B,m,code);$('sm').classList.add('on')}
+async function decR(r,code){if(!r.enc)return r.text||'';try{return await decT(r.ct,code)}catch(e){return '（需要代碼才能閱讀這則回信）'}}
+function renderReplies(B,m,code){const box=mk('div','rpl'),list=MRE.filter(r=>r.re===m.id).sort((a,b)=>a.t-b.t);B.append(box);box.append(mk('div','rph','💬 回信（'+list.length+'）'));
+ list.forEach(r=>{const d=mk('div','rpi'),txt=mk('div','rpt','…');d.append(mk('b','',(r.by||'匿名')+' · '+fdate(r.t)+(r.ed?'（已編輯）':'')),txt);box.append(d);
+  decR(r,code).then(t=>{txt.textContent=t;if(!canDel(r))return;const ac2=mk('div','bar');
+   if(mineO(r)){const ed=mk('button','','編輯');ed.onclick=()=>{const ta=mk('textarea');ta.maxLength=300;ta.rows=3;ta.value=t;ta.style.cssText='width:100%;margin:4px 0';const ok=mk('button','pri','儲存'),no=mk('button','','取消');txt.replaceWith(ta);ac2.innerHTML='';ac2.append(ok,no);no.onclick=()=>showLetter(m,curView?curView.text:'',code);
+     ok.onclick=async()=>{const v=ta.value.trim();if(!v){toast('內容不能是空的');return}if(!chk(v))return;try{const u={ed:Date.now()};if(r.enc)u.ct=await encT(v,code);else u.text=v;await db.doc('letters/p/mailre/'+r.id).update(u);toast('已更新')}catch(er){toast('更新失敗：'+emsg(er))}}};ac2.append(ed)}
+   const x=mk('button','',mineO(r)?'刪除':'👑 刪除');x.onclick=()=>{if(!x.dataset.s){x.dataset.s=1;x.textContent='確定刪除？';return}db.doc('letters/p/mailre/'+r.id).delete().then(()=>toast('已刪除')).catch(er=>toast('刪除失敗：'+emsg(er)))};ac2.append(x);d.append(ac2)})});
+ const ta=mk('textarea');ta.maxLength=300;ta.rows=3;ta.placeholder='寫下回信…';ta.value=rpDraft;ta.oninput=()=>{rpDraft=ta.value};
+ const sgc=mk('input');sgc.type='checkbox';sgc.checked=true;sgc.style.width='auto';const by=mk('input');by.placeholder='署名';by.maxLength=12;by.value=store('lt_nick');by.style.cssText='width:110px;display:inline-block';
+ const sgl=mk('label');sgl.style.cssText='display:flex;gap:6px;align-items:center;margin:6px 0';sgl.append(sgc,'署名',by);
+ const send=mk('button','pri','✍️ 送出回信');
+ send.onclick=async()=>{const t=ta.value.trim();if(!t){toast('先寫點什麼吧');return}const byV=sgc.checked?(by.value.trim()||'匿名'):'';if(!chk(t,byV))return;if(m.enc&&!code){toast('需要代碼才能回覆加密信');return}send.disabled=true;
+  try{const d={re:m.id,by:byV,uid,t:Date.now(),enc:!!m.enc};if(m.enc)d.ct=await encT(t,code);else d.text=t;await db.collection('letters/p/mailre').add(d);rpDraft='';ta.value='';toast('已送出回信')}catch(er){toast('送出失敗：'+emsg(er))}send.disabled=false};
+ box.append(ta,sgl,send)}
 function openSealed(){if(admin){openList('enc');return}
  const B=$('smb');B.innerHTML='';B.append(mk('p','trh','🔒 加密信件'),mk('p','','請輸入寄信人給你的 5 位數代碼：'));
  const i=mk('input');i.inputMode='numeric';i.maxLength=5;i.placeholder='例如 12345';i.style.cssText='text-align:center;font-size:22px;letter-spacing:.3em';
